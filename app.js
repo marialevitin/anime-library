@@ -302,5 +302,37 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
 });
 
+// --- Export / Import ---
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: 'anime-library.json',
+  });
+  a.click();
+});
+
+document.getElementById('btn-import').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      const existingIds = new Set(db.map(x => x.id));
+      const newItems = imported.filter(x => !existingIds.has(x.id));
+      db = [...newItems, ...db];
+      save();
+      render();
+      alert(`Импортировано: ${newItems.length} новых записей.`);
+    } catch {
+      alert('Ошибка: файл повреждён или неверного формата.');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
 // --- Init ---
 render();

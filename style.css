@@ -30,6 +30,12 @@ header {
   border-bottom: 1px solid var(--surface2);
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 header h1 {
   font-size: 1.6rem;
   background: linear-gradient(90deg, var(--accent), var(--accent2));
@@ -50,6 +56,18 @@ header h1 {
   transition: opacity .2s;
 }
 .btn-primary:hover { opacity: .85; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--surface2);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: .9rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--text); }
 
 .btn-danger {
   background: transparent;
@@ -191,6 +209,8 @@ header h1 {
 }
 
 /* Modal */
+[hidden] { display: none !important; }
+
 .overlay {
   position: fixed;
   inset: 0;

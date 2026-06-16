@@ -9,7 +9,11 @@
 <body>
   <header>
     <h1>🌸 Anime Library</h1>
-    <button id="btn-add" class="btn-primary">+ Добавить аниме</button>
+    <div class="header-actions">
+      <button id="btn-export" class="btn-secondary">Экспорт</button>
+      <label class="btn-secondary" title="Импорт из файла">Импорт<input type="file" id="btn-import" accept=".json" hidden /></label>
+      <button id="btn-add" class="btn-primary">+ Добавить аниме</button>
+    </div>
   </header>
 
   <section class="filters">
