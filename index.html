@@ -39,8 +39,16 @@
       <h2 id="modal-title">Новое аниме</h2>
 
       <label>Название *
-        <input type="text" id="f-title" placeholder="Название аниме" />
+        <div class="title-search-wrap">
+          <input type="text" id="f-title" placeholder="Название аниме" autocomplete="off" />
+          <div id="search-results" class="search-results" hidden></div>
+        </div>
       </label>
+
+      <div id="cover-preview" class="cover-preview" hidden>
+        <img id="cover-img" src="" alt="обложка" />
+        <button id="btn-clear-cover" type="button">✕ убрать</button>
+      </div>
 
       <label>Оценка: <span id="rating-val">—</span>
         <div class="stars" id="stars"></div>

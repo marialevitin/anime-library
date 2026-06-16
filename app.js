@@ -21,9 +21,11 @@ let db = load();
 let editingId = null;
 let currentTags = [];
 let currentRating = 0;
+let currentCover = '';
 let filterStatus = '';
 let filterTag = '';
 let filterSearch = '';
+let searchTimer = null;
 
 // --- Persist ---
 function load() {
@@ -60,8 +62,11 @@ function render() {
   items.forEach(a => {
     const card = document.createElement('div');
     card.className = 'card';
+    const coverHtml = a.cover
+      ? `<img src="${esc(a.cover)}" alt="" loading="lazy" />`
+      : COVERS[Math.abs(hashStr(a.id)) % COVERS.length];
     card.innerHTML = `
-      <div class="card-cover">${COVERS[Math.abs(hashStr(a.id)) % COVERS.length]}</div>
+      <div class="card-cover">${coverHtml}</div>
       <div class="card-body">
         <div class="card-title">${esc(a.title)}</div>
         <div class="card-rating">${a.rating ? '★ ' + a.rating + ' / 10' : '—'}</div>
@@ -123,11 +128,14 @@ function openModal(id = null) {
     document.getElementById('f-notes').value = a.notes;
     currentRating = a.rating;
     currentTags = [...a.tags];
+    currentCover = a.cover || '';
   } else {
     document.getElementById('f-title').value = '';
     document.getElementById('f-status').value = 'completed';
     document.getElementById('f-notes').value = '';
+    currentCover = '';
   }
+  renderCoverPreview();
 
   renderStars();
   renderTagPills();
@@ -141,7 +149,50 @@ function openModal(id = null) {
 function closeModal() {
   document.getElementById('modal').hidden = true;
   document.getElementById('overlay').hidden = true;
+  document.getElementById('search-results').hidden = true;
   editingId = null;
+}
+
+// --- Cover preview ---
+function renderCoverPreview() {
+  const wrap = document.getElementById('cover-preview');
+  const img = document.getElementById('cover-img');
+  if (currentCover) {
+    img.src = currentCover;
+    wrap.hidden = false;
+  } else {
+    wrap.hidden = true;
+  }
+}
+
+// --- MAL search via Jikan API ---
+async function searchAnime(query) {
+  const box = document.getElementById('search-results');
+  if (!query.trim()) { box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = '<div class="search-loading">Ищу…</div>';
+  try {
+    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=6&sfw=true`);
+    const json = await res.json();
+    const items = json.data || [];
+    if (!items.length) { box.innerHTML = '<div class="search-loading">Ничего не найдено</div>'; return; }
+    box.innerHTML = '';
+    items.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'search-result-item';
+      const thumb = item.images?.jpg?.small_image_url || '';
+      el.innerHTML = `${thumb ? `<img src="${esc(thumb)}" alt="" />` : ''}<span>${esc(item.title)}</span>`;
+      el.addEventListener('click', () => {
+        document.getElementById('f-title').value = item.title;
+        currentCover = item.images?.jpg?.large_image_url || item.images?.jpg?.image_url || '';
+        renderCoverPreview();
+        box.hidden = true;
+      });
+      box.appendChild(el);
+    });
+  } catch {
+    box.innerHTML = '<div class="search-loading">Ошибка загрузки</div>';
+  }
 }
 
 // --- Stars ---
@@ -240,6 +291,7 @@ function saveEntry() {
     status: document.getElementById('f-status').value,
     tags: [...currentTags],
     notes: document.getElementById('f-notes').value.trim(),
+    cover: currentCover,
     createdAt: editingId ? db.find(x => x.id === editingId)?.createdAt : new Date().toISOString(),
   };
 
@@ -266,6 +318,22 @@ function deleteEntry() {
 
 // --- Event listeners ---
 document.getElementById('btn-add').addEventListener('click', () => openModal());
+
+document.getElementById('f-title').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { document.getElementById('search-results').hidden = true; return; }
+  searchTimer = setTimeout(() => searchAnime(q), 500);
+});
+
+document.getElementById('f-title').addEventListener('blur', () => {
+  setTimeout(() => { document.getElementById('search-results').hidden = true; }, 200);
+});
+
+document.getElementById('btn-clear-cover').addEventListener('click', () => {
+  currentCover = '';
+  renderCoverPreview();
+});
 document.getElementById('btn-close').addEventListener('click', closeModal);
 document.getElementById('overlay').addEventListener('click', closeModal);
 document.getElementById('btn-save').addEventListener('click', saveEntry);
