@@ -145,11 +145,12 @@ async function connectGist(token) {
 
     localStorage.setItem(GIST_KEY, gistId);
     statusEl.className = 'sync-status ok';
-    statusEl.textContent = '✓ Подключено! Загружаю данные…';
+    statusEl.textContent = '✓ Подключено! Синхронизирую…';
     document.getElementById('btn-sync-disconnect').hidden = false;
     document.getElementById('btn-sync-connect').textContent = 'Обновить';
 
-    await syncPull();
+    await syncPull();   // загрузить чужие данные из Gist
+    await syncPush();   // залить все локальные данные в Gist
     closeSyncModal();
   } catch (e) {
     statusEl.className = 'sync-status err';
