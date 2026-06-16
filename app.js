@@ -119,7 +119,12 @@ async function connectGist(token) {
     const userRes = await fetch('https://api.github.com/user', {
       headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github.v3+json' },
     });
-    if (!userRes.ok) throw new Error('Неверный токен');
+    if (userRes.status === 401) throw new Error('Неверный токен');
+    if (!userRes.ok) throw new Error('Ошибка GitHub: ' + userRes.status);
+
+    // Check gist scope
+    const scopes = userRes.headers.get('x-oauth-scopes') || '';
+    if (!scopes.includes('gist')) throw new Error('Токен не имеет разрешения "gist". Создай новый токен с галочкой gist на github.com/settings/tokens/new');
 
     localStorage.setItem(TOKEN_KEY, token);
 
