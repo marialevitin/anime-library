@@ -452,6 +452,27 @@ header h1 {
   margin-top: 24px;
 }
 
+/* Sync status */
+.sync-status {
+  font-size: .85rem;
+  margin: 10px 0;
+  min-height: 20px;
+}
+.sync-status.ok  { color: #4ade80; }
+.sync-status.err { color: var(--danger); }
+.sync-status.loading { color: var(--muted); }
+
+.sync-indicator {
+  font-size: .75rem;
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--surface2);
+}
+.sync-indicator.synced { color: #4ade80; }
+.sync-indicator.syncing { color: #fbbf24; }
+.sync-indicator.error   { color: var(--danger); }
+
 /* Responsive */
 @media (max-width: 600px) {
   header { padding: 16px; }

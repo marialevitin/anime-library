@@ -12,6 +12,7 @@
     <div class="header-actions">
       <button id="btn-export" class="btn-secondary">Экспорт</button>
       <label class="btn-secondary" title="Импорт из файла">Импорт<input type="file" id="btn-import" accept=".json" hidden /></label>
+      <button id="btn-sync-settings" class="btn-secondary" title="Настройки синхронизации">☁️</button>
       <button id="btn-add" class="btn-primary">+ Добавить аниме</button>
     </div>
   </header>
@@ -81,6 +82,26 @@
       </div>
     </div>
   </div>
+  <!-- Sync settings modal -->
+  <div id="sync-modal" class="modal" hidden>
+    <div class="modal-box">
+      <button class="modal-close" id="btn-sync-close">✕</button>
+      <h2>☁️ Синхронизация</h2>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:16px">
+        Данные хранятся в приватном GitHub Gist — доступны на всех устройствах.<br>
+        Токен вводится один раз на каждом новом устройстве.
+      </p>
+      <label>GitHub Token
+        <input type="password" id="sync-token" placeholder="ghp_…" autocomplete="off" />
+      </label>
+      <div id="sync-status" class="sync-status"></div>
+      <div class="modal-actions">
+        <button id="btn-sync-disconnect" class="btn-danger" hidden>Отключить</button>
+        <button id="btn-sync-connect" class="btn-primary">Подключить</button>
+      </div>
+    </div>
+  </div>
+
   <div id="overlay" class="overlay" hidden></div>
 
   <script src="app.js"></script>
