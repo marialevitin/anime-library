@@ -186,6 +186,10 @@ async function searchAnime(query) {
         document.getElementById('f-title').value = item.title;
         currentCover = item.images?.jpg?.large_image_url || item.images?.jpg?.image_url || '';
         renderCoverPreview();
+        const genres = (item.genres || []).map(g => g.name.toLowerCase());
+        genres.forEach(g => { if (!currentTags.includes(g)) currentTags.push(g); });
+        renderTagPills();
+        renderPresetTags();
         box.hidden = true;
       });
       box.appendChild(el);
