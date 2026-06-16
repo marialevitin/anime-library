@@ -381,25 +381,38 @@ async function searchAnime(query) {
   box.hidden = false;
   box.innerHTML = '<div class="search-loading">Ищу…</div>';
   try {
-    const res  = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=6&sfw=true`);
+    const res  = await fetch(
+      `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}&page[limit]=6&fields[anime]=canonicalTitle,posterImage,categories`,
+      { headers: { Accept: 'application/vnd.api+json' } }
+    );
     const json = await res.json();
     const items = json.data || [];
     if (!items.length) { box.innerHTML = '<div class="search-loading">Ничего не найдено</div>'; return; }
     box.innerHTML = '';
     items.forEach(item => {
-      const el    = document.createElement('div');
+      const attr   = item.attributes || {};
+      const title  = attr.canonicalTitle || attr.titles?.en || '';
+      const thumb  = attr.posterImage?.small || attr.posterImage?.medium || '';
+      const cover  = attr.posterImage?.large || attr.posterImage?.medium || '';
+      const el     = document.createElement('div');
       el.className = 'search-result-item';
-      const thumb  = item.images?.jpg?.small_image_url || '';
-      el.innerHTML = `${thumb ? `<img src="${esc(thumb)}" alt="" />` : ''}<span>${esc(item.title)}</span>`;
-      el.addEventListener('click', () => {
-        document.getElementById('f-title').value = item.title;
-        currentCover = item.images?.jpg?.large_image_url || item.images?.jpg?.image_url || '';
+      el.innerHTML = `${thumb ? `<img src="${esc(thumb)}" alt="" />` : ''}<span>${esc(title)}</span>`;
+      el.addEventListener('click', async () => {
+        document.getElementById('f-title').value = title;
+        currentCover = cover;
         renderCoverPreview();
-        const genres = (item.genres || []).map(g => g.name.toLowerCase());
-        genres.forEach(g => { if (!currentTags.includes(g)) currentTags.push(g); });
-        renderTagPills();
-        renderPresetTags();
         box.hidden = true;
+        // Load genres via categories relationship
+        try {
+          const catRes  = await fetch(`https://kitsu.io/api/edge/anime/${item.id}/categories?page[limit]=5`, { headers: { Accept: 'application/vnd.api+json' } });
+          const catJson = await catRes.json();
+          (catJson.data || []).forEach(c => {
+            const g = c.attributes?.title?.toLowerCase();
+            if (g && !currentTags.includes(g)) currentTags.push(g);
+          });
+          renderTagPills();
+          renderPresetTags();
+        } catch { /* genres optional */ }
       });
       box.appendChild(el);
     });
