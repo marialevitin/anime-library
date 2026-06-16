@@ -283,6 +283,29 @@ header h1 {
 .star.on { color: #fbbf24; }
 .star:hover { transform: scale(1.2); }
 
+/* Preset tags */
+.preset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.preset-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--surface2);
+  background: transparent;
+  color: var(--muted);
+  font-size: .8rem;
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-tag:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* Tags input */
 .tag-input-wrap {
   margin-top: 6px;

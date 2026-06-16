@@ -7,6 +7,13 @@ const STATUS_LABEL = {
   planned: 'Буду смотреть',
 };
 
+const PRESET_TAGS = [
+  'сёнэн', 'сёдзё', 'сейнэн', 'дзёсэй',
+  'боевик', 'романтика', 'комедия', 'драма', 'фэнтези', 'ужасы', 'триллер',
+  'школа', 'меха', 'исэкай', 'спорт', 'повседневность', 'мистика',
+  'короткий', 'длинный', 'фильм',
+];
+
 const COVERS = ['🌸','⚔️','🔥','🌊','🌙','🎭','🦋','🗡️','🌺','💫','🐉','🎌'];
 
 // --- State ---
@@ -40,11 +47,14 @@ function render() {
   });
 
   grid.innerHTML = '';
-  empty.hidden = items.length > 0 || db.length > 0;
 
-  if (db.length === 0) { empty.hidden = false; }
-  else if (items.length === 0) {
-    grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">Ничего не найдено по фильтрам.</p>';
+  if (db.length === 0) {
+    empty.hidden = false;
+  } else {
+    empty.hidden = true;
+    if (items.length === 0) {
+      grid.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">Ничего не найдено по фильтрам.</p>';
+    }
   }
 
   items.forEach(a => {
@@ -54,7 +64,7 @@ function render() {
       <div class="card-cover">${COVERS[Math.abs(hashStr(a.id)) % COVERS.length]}</div>
       <div class="card-body">
         <div class="card-title">${esc(a.title)}</div>
-        <div class="card-rating">${a.rating ? '★'.repeat(a.rating) + '☆'.repeat(10 - a.rating) : '—'}</div>
+        <div class="card-rating">${a.rating ? '★ ' + a.rating + ' / 10' : '—'}</div>
         <span class="card-status status-${a.status}">${STATUS_LABEL[a.status]}</span>
         ${a.tags.length ? `<div class="card-tags">${a.tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join('')}</div>` : ''}
       </div>`;
@@ -82,8 +92,9 @@ function renderTagFilters() {
   wrap.innerHTML = '';
   if (!all.length) return;
 
-  const clearChip = Object.assign(document.createElement('button'), { className: 'chip' + (filterTag === '' ? '' : ''), textContent: 'Все теги' });
-  if (!filterTag) clearChip.classList.add('active');
+  const clearChip = document.createElement('button');
+  clearChip.className = 'chip' + (!filterTag ? ' active' : '');
+  clearChip.textContent = 'Все теги';
   clearChip.addEventListener('click', () => { filterTag = ''; render(); });
   wrap.appendChild(clearChip);
 
@@ -102,8 +113,6 @@ function openModal(id = null) {
   currentTags = [];
   currentRating = 0;
 
-  const modal = document.getElementById('modal');
-  const overlay = document.getElementById('overlay');
   document.getElementById('modal-title').textContent = id ? 'Редактировать' : 'Новое аниме';
   document.getElementById('btn-delete').hidden = !id;
 
@@ -122,8 +131,10 @@ function openModal(id = null) {
 
   renderStars();
   renderTagPills();
-  modal.hidden = false;
-  overlay.hidden = false;
+  renderPresetTags();
+
+  document.getElementById('modal').hidden = false;
+  document.getElementById('overlay').hidden = false;
   document.getElementById('f-title').focus();
 }
 
@@ -139,25 +150,36 @@ function renderStars() {
   const val = document.getElementById('rating-val');
   container.innerHTML = '';
   val.textContent = currentRating || '—';
+
   for (let i = 1; i <= 10; i++) {
     const star = document.createElement('span');
     star.className = 'star' + (i <= currentRating ? ' on' : '');
     star.textContent = '★';
-    star.addEventListener('click', () => {
-      currentRating = currentRating === i ? 0 : i;
-      renderStars();
-    });
-    star.addEventListener('mouseover', () => {
-      container.querySelectorAll('.star').forEach((s, idx) => s.classList.toggle('on', idx < i));
-    });
-    star.addEventListener('mouseout', () => {
-      container.querySelectorAll('.star').forEach((s, idx) => s.classList.toggle('on', idx < currentRating));
-    });
+    star.dataset.i = i;
     container.appendChild(star);
   }
+
+  container.addEventListener('click', e => {
+    const i = +e.target.dataset.i;
+    if (!i) return;
+    currentRating = currentRating === i ? 0 : i;
+    renderStars();
+  });
+
+  container.addEventListener('mouseover', e => {
+    const i = +e.target.dataset.i;
+    if (!i) return;
+    container.querySelectorAll('.star').forEach((s, idx) => s.classList.toggle('on', idx < i));
+    val.textContent = i;
+  });
+
+  container.addEventListener('mouseout', () => {
+    container.querySelectorAll('.star').forEach((s, idx) => s.classList.toggle('on', idx < currentRating));
+    val.textContent = currentRating || '—';
+  });
 }
 
-// --- Tag pills ---
+// --- Tag pills (selected tags) ---
 function renderTagPills() {
   const list = document.getElementById('tag-list');
   list.innerHTML = '';
@@ -168,9 +190,33 @@ function renderTagPills() {
     pill.querySelector('button').addEventListener('click', () => {
       currentTags.splice(i, 1);
       renderTagPills();
+      renderPresetTags();
     });
     list.appendChild(pill);
   });
+}
+
+// --- Preset tag buttons ---
+function renderPresetTags() {
+  const wrap = document.getElementById('preset-tags');
+  wrap.innerHTML = '';
+
+  // Combine presets + custom tags from db, minus already selected
+  const allKnown = [...new Set([...PRESET_TAGS, ...db.flatMap(a => a.tags)])];
+  allKnown
+    .filter(t => !currentTags.includes(t))
+    .forEach(tag => {
+      const btn = document.createElement('button');
+      btn.className = 'preset-tag';
+      btn.textContent = tag;
+      btn.type = 'button';
+      btn.addEventListener('click', () => {
+        currentTags.push(tag);
+        renderTagPills();
+        renderPresetTags();
+      });
+      wrap.appendChild(btn);
+    });
 }
 
 function addTag(raw) {
@@ -178,6 +224,7 @@ function addTag(raw) {
   if (tag && !currentTags.includes(tag)) {
     currentTags.push(tag);
     renderTagPills();
+    renderPresetTags();
   }
 }
 
